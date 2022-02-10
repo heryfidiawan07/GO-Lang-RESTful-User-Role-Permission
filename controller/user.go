@@ -4,6 +4,7 @@ import (
 	// "fmt"
 	"restfull-api/config"
 	"restfull-api/models"
+	"restfull-api/request"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,10 +20,16 @@ func UserIndex(c *gin.Context) {
 }
 
 func UserCreate(c *gin.Context) {
+	var valid request.UserPost
+	if err := c.ShouldBind(&valid); err != nil {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
+		return
+	}
+
 	data := models.User {
-		Username: c.PostForm("username"),
-		Name: c.PostForm("name"),
-		Email: c.PostForm("email"),
+		Username: valid.Username,
+		Name: valid.Name,
+		Email: valid.Email,
 	}
 
 	if err := config.DB.Create(&data).Error; err != nil {
@@ -34,6 +41,12 @@ func UserCreate(c *gin.Context) {
 }
 
 func UserUpdate(c *gin.Context) {
+	var valid request.UserPut
+	if err := c.ShouldBind(&valid); err != nil {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
+		return
+	}
+
 	id := c.Param("id")
 	var user models.User
 
@@ -43,9 +56,9 @@ func UserUpdate(c *gin.Context) {
 	}
 
 	data := models.User{
-		Username: c.PostForm("username"),
-		Name: c.PostForm("name"),
-		Email: c.PostForm("email"),
+		Username: valid.Username,
+		Name: valid.Name,
+		Email: valid.Email,
 	}
 
 	if err := config.DB.Model(&user).Updates(&data).Error; err != nil {

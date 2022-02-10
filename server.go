@@ -47,6 +47,7 @@ func main() {
 		// Role
 		role := v1.Group("/role")
 		{
+			// Json POST
 			role.GET("/", middleware.Auth("role-index"), controller.RoleIndex)
 			role.POST("/", middleware.Auth("role-create"), controller.RoleCreate)
 			role.PUT("/:id", middleware.Auth("role-edit"), controller.RoleUpdate)

@@ -4,6 +4,7 @@ import (
 	// "fmt"
 	"restfull-api/config"
 	"restfull-api/models"
+	"restfull-api/request"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,8 +20,20 @@ func RoleIndex(c *gin.Context) {
 }
 
 func RoleCreate(c *gin.Context) {
+	var valid request.RolePost
+
+	if err := c.ShouldBindJSON(&valid); err != nil {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
+		return
+	}
+	// fmt.Println("valid *** ",valid)
+	if len(valid.Permissions) == 0 {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": "Permissions is required !"})
+		return
+	}
+
 	role := models.Role {
-		Name: c.PostForm("name"),
+		Name: valid.Name,
 	}
 
 	if err := config.DB.Create(&role).Error; err != nil {
@@ -28,7 +41,7 @@ func RoleCreate(c *gin.Context) {
 		return
 	}
 	
-	for _, value := range c.PostFormMap("permissions") {
+	for _, value := range valid.Permissions {
 		permissions := models.RolePermission{
 			RoleId: role.Id,
 			PermissionId: value,
@@ -43,6 +56,18 @@ func RoleCreate(c *gin.Context) {
 }
 
 func RoleUpdate(c *gin.Context) {
+	var valid request.RolePut
+
+	if err := c.ShouldBindJSON(&valid); err != nil {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
+		return
+	}
+	// fmt.Println("valid *** ",valid)
+	if len(valid.Permissions) == 0 {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": "Permissions is required !"})
+		return
+	}
+
 	id := c.Param("id")
 	var role models.Role
 
@@ -52,7 +77,7 @@ func RoleUpdate(c *gin.Context) {
 	}
 
 	data := models.Role{
-		Name: c.PostForm("name"),
+		Name: valid.Name,
 	}
 
 	if err := config.DB.Model(&role).Updates(&data).Error; err != nil {
@@ -65,7 +90,7 @@ func RoleUpdate(c *gin.Context) {
 		return
 	}
 
-	for _, value := range c.PostFormMap("permissions") {
+	for _, value := range valid.Permissions {
 		permissions := models.RolePermission{
 			RoleId: role.Id,
 			PermissionId: value,
