@@ -19,8 +19,8 @@ func RoleIndex(c *gin.Context) {
 	c.JSON(200, gin.H{"status": true, "data": roles, "message": nil})
 }
 
-func RoleCreate(c *gin.Context) {
-	var valid request.RolePost
+func RoleStore(c *gin.Context) {
+	var valid request.RoleStore
 
 	if err := c.ShouldBindJSON(&valid); err != nil {
 		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
@@ -56,7 +56,7 @@ func RoleCreate(c *gin.Context) {
 }
 
 func RoleUpdate(c *gin.Context) {
-	var valid request.RolePut
+	var valid request.RoleUpdate
 
 	if err := c.ShouldBindJSON(&valid); err != nil {
 		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})

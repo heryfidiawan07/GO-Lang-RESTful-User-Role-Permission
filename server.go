@@ -31,15 +31,15 @@ func main() {
 		// Set a lower memory limit for multipart forms (default is 32 MiB)
 		router.MaxMultipartMemory = 8 << 20 // 8 MiB
 		v1.POST("/upload/:disk", controller.Upload)
-		v1.GET("/storage/:filename", controller.Download)
-		v1.GET("/encode/:filename", controller.Base64)
+		v1.GET("/storage/:filename", controller.FileStream)
+		v1.GET("/encode/:filename", controller.Encode)
 
 		// User
 		user := v1.Group("/user")
 		{
 			user.GET("/", middleware.Auth("user-index"), controller.UserIndex)
-			user.POST("/", middleware.Auth("user-create"), controller.UserCreate)
-			user.PUT("/:id", middleware.Auth("user-edit"), controller.UserUpdate)
+			user.POST("/", middleware.Auth("user-store"), controller.UserStore)
+			user.PUT("/:id", middleware.Auth("user-update"), controller.UserUpdate)
 			user.GET("/:id", middleware.Auth("user-show"), controller.UserShow)
 			user.DELETE("/:id", middleware.Auth("user-delete"), controller.UserDelete)
 		}
@@ -49,8 +49,8 @@ func main() {
 		{
 			// Json POST
 			role.GET("/", middleware.Auth("role-index"), controller.RoleIndex)
-			role.POST("/", middleware.Auth("role-create"), controller.RoleCreate)
-			role.PUT("/:id", middleware.Auth("role-edit"), controller.RoleUpdate)
+			role.POST("/", middleware.Auth("role-store"), controller.RoleStore)
+			role.PUT("/:id", middleware.Auth("role-update"), controller.RoleUpdate)
 			role.GET("/:id", middleware.Auth("role-show"), controller.RoleShow)
 			role.DELETE("/:id", middleware.Auth("role-delete"), controller.RoleDelete)
 		}
@@ -59,7 +59,7 @@ func main() {
 		permission := v1.Group("/permission")
 		{
 			permission.GET("/", middleware.Auth("except"), controller.PermissionIndex)
-			permission.POST("/", middleware.Auth("except"), controller.PermissionCreate)
+			permission.POST("/", middleware.Auth("except"), controller.PermissionStore)
 		}
 	}
 

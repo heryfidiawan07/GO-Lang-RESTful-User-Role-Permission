@@ -19,8 +19,8 @@ func UserIndex(c *gin.Context) {
 	c.JSON(200, gin.H{"status": true, "data": users, "message": nil})
 }
 
-func UserCreate(c *gin.Context) {
-	var valid request.UserPost
+func UserStore(c *gin.Context) {
+	var valid request.UserStore
 	if err := c.ShouldBind(&valid); err != nil {
 		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
 		return
@@ -41,7 +41,7 @@ func UserCreate(c *gin.Context) {
 }
 
 func UserUpdate(c *gin.Context) {
-	var valid request.UserPut
+	var valid request.UserUpdate
 	if err := c.ShouldBind(&valid); err != nil {
 		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
 		return

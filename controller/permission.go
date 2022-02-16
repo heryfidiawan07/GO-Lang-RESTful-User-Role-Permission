@@ -18,7 +18,7 @@ func PermissionIndex(c *gin.Context) {
 	c.JSON(200, gin.H{"status": true, "data": permissions, "message": nil})
 }
 
-func PermissionCreate(c *gin.Context) {
+func PermissionStore(c *gin.Context) {
 	data := models.Permission {
 		ParentMenu: c.PostForm("parent_menu"),
 		ParentId: c.PostForm("parent_id"),

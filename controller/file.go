@@ -32,7 +32,7 @@ func Upload(c *gin.Context) {
 	c.JSON(201, gin.H{"status": true, "data": file.Filename, "message": "Data created successfully"})
 }
 
-func Base64(c *gin.Context) {
+func Encode(c *gin.Context) {
 	filename := c.Param("filename")
 	// Read the entire file into a byte slice
 	bytes, err := ioutil.ReadFile(filepath.FromSlash("storage/public/"+filename))
@@ -64,7 +64,7 @@ func Base64(c *gin.Context) {
 	c.JSON(201, gin.H{"status": true, "data": base64Encoding, "message": "Data created successfully"})
 }
 
-func Download(c *gin.Context) {
+func FileStream(c *gin.Context) {
 	filename := c.Param("filename")
 	basePath, _ := os.Getwd()
 	c.File(basePath+"/storage/public/"+filename)
