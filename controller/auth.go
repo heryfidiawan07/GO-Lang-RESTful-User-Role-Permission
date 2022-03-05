@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"restfull-api/config"
 	"restfull-api/models"
+	"restfull-api/request"
+	"restfull-api/helper"
 	"github.com/gin-gonic/gin"
 	"github.com/danilopolani/gocialite/structs"
 	"github.com/dgrijalva/jwt-go"
-	// "github.com/golang-jwt/jwt"
 )
 
 // Redirect to correct oAuth URL
@@ -78,7 +79,6 @@ func CallbackHandler(c *gin.Context) {
 	fmt.Printf("%#v", token)
 	fmt.Printf("%#v", user)
 	fmt.Printf("%#v", provider)
-
 	
 	var newUser = getOrRegisterUser(provider, user)
 	var newToken = createToken(&newUser)
@@ -90,6 +90,55 @@ func CallbackHandler(c *gin.Context) {
 
 	// If no errors, show provider name
 	// c.Writer.Write([]byte("Hi, " + user.FullName))
+}
+
+func Login(c *gin.Context) {
+	var valid request.Login
+	if err := c.ShouldBind(&valid); err != nil {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
+		return
+	}
+
+	var user models.User
+	if err := config.DB.First(&user, "username = ?", valid.Username).Error; err != nil {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": "Username / password invalid !"})
+		return
+	}
+
+	validPassword := helper.ComparePassword(user.Password, []byte(valid.Password))
+	if !validPassword {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": "Username / password invalid !"})
+		return
+	}
+
+	var token = createToken(&user)
+
+	c.JSON(200, gin.H{
+		"token": token,
+		"data": user,
+	})
+}
+
+func Register(c *gin.Context) {
+	var valid request.Register
+	if err := c.ShouldBind(&valid); err != nil {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
+		return
+	}
+
+	data := models.User {
+		Username: valid.Username,
+		Name: valid.Name,
+		Email: valid.Email,
+		Password: helper.HashAndSalt([]byte(valid.Password)),
+	}
+
+	if err := config.DB.Create(&data).Error; err != nil {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": err})
+		return
+	}
+
+	c.JSON(201, gin.H{"status": true, "data": data, "message": "Data created successfully & please login"})
 }
 
 func getOrRegisterUser(provider string, user *structs.User) models.User{
@@ -118,7 +167,6 @@ func getOrRegisterUser(provider string, user *structs.User) models.User{
 	
 	fmt.Println("* * Login * *")
 	fmt.Println("* * * * * userData", userData)
-	fmt.Println("* * * * * userData.ID", userData.Id)
 	fmt.Println("* * Login * *")
 
 	return userData

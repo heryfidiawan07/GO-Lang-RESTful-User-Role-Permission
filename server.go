@@ -23,9 +23,13 @@ func main() {
 		// Auth
 		v1.GET("/auth/:provider", controller.RedirectHandler)
 		v1.GET("/auth/:provider/callback", controller.CallbackHandler)
+		// 
+		v1.POST("/auth/login", controller.Login)
+		v1.POST("/auth/register", controller.Register)
 
 		// Me
 		v1.GET("/me", middleware.Auth("me"), controller.Me)
+		v1.PUT("/changepassword/:id", middleware.Auth("me"), controller.ChangePassword)
 
 		// File
 		// Set a lower memory limit for multipart forms (default is 32 MiB)

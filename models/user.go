@@ -9,8 +9,9 @@ import (
 type User struct {
 	Id string `gorm:"size:36;uniqueIndex;primaryKey"`
 	Name string `gorm:"size:100;"`
-	Username string `gorm:"size:100;"`
+	Username string `gorm:"unique_index;size:100;"`
 	Email string `gorm:"unique_index;size:100;"`
+	Password string `gorm:"size:255;"`
 	SocialId string `gorm:"size:100;"`
 	Provider string `gorm:"size:100;"`
 	Avatar string `gorm:"size:200;"`
