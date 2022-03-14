@@ -29,3 +29,7 @@ type UserUpdate struct {
 	Username string `form:"username" json:"username" xml:"username"  binding:"required"`
 	Email string `form:"email" json:"email" xml:"email"  binding:"required"`
 }
+
+type RefreshToken struct {
+	RefreshToken string `form:"refresh_token" json:"refresh_token" xml:"refresh_token"  binding:"required"`
+}

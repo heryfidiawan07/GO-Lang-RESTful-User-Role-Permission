@@ -111,10 +111,23 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	refreshTokenData := models.RefreshToken {
+		Revoked: false,
+		ExpiredAt: time.Now().AddDate(0, 0, 7),
+		UserId: user.Id,
+	}
+
+	if err := config.DB.Create(&refreshTokenData).Error; err != nil {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": err})
+		return
+	}
+
 	var token = createToken(&user)
+	var refreshToken = createRefreshToken(&refreshTokenData)
 
 	c.JSON(200, gin.H{
 		"token": token,
+		"refresh_token": refreshToken,
 		"data": user,
 	})
 }
@@ -172,24 +185,139 @@ func getOrRegisterUser(provider string, user *structs.User) models.User{
 	return userData
 }
 
+func RefreshToken(c *gin.Context) {
+	var valid request.RefreshToken
+	if err := c.ShouldBind(&valid); err != nil {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
+		return
+	}
+
+	token, _ := jwt.Parse(valid.RefreshToken, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		fmt.Println("refresh_id", claims["refresh_id"])
+		var refreshToken models.RefreshToken
+		if err := config.DB.First(&refreshToken, "id = ?", claims["refresh_id"]).Error; err != nil {
+			c.JSON(404, gin.H{"message": "Refresh token not found !"})
+			return
+		}
+
+		if (refreshToken.Revoked == true) {
+			c.JSON(404, gin.H{"message": "Refresh token has been revoked !"})
+			return
+		}
+
+		var user models.User
+		if err := config.DB.First(&user, "id = ?", refreshToken.UserId).Error; err != nil {
+			c.JSON(404, gin.H{"message": "User not found !"})
+			return
+		}
+		
+		c.JSON(200, gin.H{
+			"token": createToken(&user),
+		})
+	} else {
+		// fmt.Println(err)
+		c.JSON(422, gin.H{"message": "Invalid Refresh Token !"})
+		c.Abort()
+		return
+	}
+}
+
+func RevokeRefreshToken(c *gin.Context) {
+	var valid request.RefreshToken
+	if err := c.ShouldBind(&valid); err != nil {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
+		return
+	}
+
+	var user models.User
+	if err := config.DB.First(&user, "id = ?", c.MustGet("jwt_user_id")).Error; err != nil {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": "Data not found !"})
+		return
+	}
+
+	token, _ := jwt.Parse(valid.RefreshToken, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		fmt.Println("refresh_id", claims["refresh_id"])
+		var refreshToken models.RefreshToken
+		if err := config.DB.First(&refreshToken, "id = ?", claims["refresh_id"]).Error; err != nil {
+			c.JSON(404, gin.H{"message": "Refresh token not found !"})
+			return
+		}
+
+		if (refreshToken.Revoked == true) {
+			c.JSON(404, gin.H{"message": "Refresh token has been revoked !"})
+			return
+		}
+
+		if (refreshToken.UserId != user.Id) {
+			c.JSON(404, gin.H{"message": "Refresh token not math with auth id !"})
+			return
+		}
+
+		data := models.RefreshToken{
+			Revoked: true,
+		}
+
+		if err := config.DB.Model(&refreshToken).Updates(&data).Error; err != nil {
+			c.JSON(404, gin.H{"status": false, "data": nil, "message": err})
+			return
+		}
+		
+		c.JSON(200, gin.H{"status": true, "data": nil, "message": "Revoke refresh token successfully"})
+	} else {
+		// fmt.Println(err)
+		c.JSON(422, gin.H{"message": "Invalid Refresh Token !"})
+		c.Abort()
+		return
+	}
+}
+
 func createToken(user *models.User) string {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.Id,
-		// "username": user.Username,
-		"exp": time.Now().AddDate(0, 0, 7).Unix(),
+		"exp": time.Now().Add(time.Minute * 15).Unix(), // expired_at 15 minutes
 		"iat": time.Now().Unix(),
 	})
 
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := jwtToken.SignedString([]byte(os.Getenv("JWT_SECRET")))
-
-	if err != nil {
-		fmt.Println("err", err)
+	if err != nil { 
+		fmt.Println("tokenString err", err)
 	}
-
-	fmt.Println(tokenString, err)
-
 	return tokenString
+}
+
+func createRefreshToken(refreshToken *models.RefreshToken) string {
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"refresh_id": refreshToken.Id,
+		"exp": time.Now().AddDate(0, 0, 2).Unix(), // expired_at 2 days
+		"iat": time.Now().Unix(),
+	})
+
+	refreshTokenString, err := jwtToken.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil { 
+		fmt.Println("refreshTokenString err", err)
+	}
+	return refreshTokenString
 }

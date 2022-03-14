@@ -108,10 +108,8 @@ func ChangePassword(c *gin.Context) {
 		return
 	}
 
-	id := c.Param("id")
 	var user models.User
-
-	if err := config.DB.First(&user, "id = ?", id).Error; err != nil {
+	if err := config.DB.First(&user, "id = ?", c.MustGet("jwt_user_id")).Error; err != nil {
 		c.JSON(404, gin.H{"status": false, "data": nil, "message": "Data not found !"})
 		return
 	}

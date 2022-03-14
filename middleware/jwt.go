@@ -51,9 +51,7 @@ func check(action string) gin.HandlerFunc {
 		bearerToken   := strings.Split(authorization, " ")
 
 		if len(bearerToken) != 2 {
-			c.JSON(401, gin.H{
-				"message": "Unauthorized !",
-			})
+			c.JSON(401, gin.H{"message": "Unauthorized !"})
 			c.Abort()
 			return
 		}
@@ -74,29 +72,22 @@ func check(action string) gin.HandlerFunc {
 			fmt.Println("user_id", claims["user_id"])
 			var user models.User
 			if err := config.DB.First(&user, "id = ?", claims["user_id"]).Error; err != nil {
-				c.JSON(404, gin.H{
-					"message": "Data not found !",
-				})
+				c.JSON(404, gin.H{"message": "Data not found !"})
 				c.Abort()
 				return
 			}
 			
 			c.Set("jwt_user_id", claims["user_id"])
-			// c.Set("jwt_user_role", claims["user_role"])
-
 			fmt.Println("**** action **** ", permission(action, c))
+			
 			if permission(action, c) == false {
-				c.JSON(401, gin.H{
-					"message": "Permission denied !",
-				})
+				c.JSON(401, gin.H{"message": "Permission denied !"})
 				c.Abort()
 				return
 			}
 		} else {
 			// fmt.Println(err)
-			c.JSON(422, gin.H{
-				"message": "Invalid Token !",
-			})
+			c.JSON(422, gin.H{"message": "Invalid Token !"})
 			c.Abort()
 			return
 		}

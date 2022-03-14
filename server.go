@@ -26,10 +26,13 @@ func main() {
 		// 
 		v1.POST("/auth/login", controller.Login)
 		v1.POST("/auth/register", controller.Register)
+		v1.POST("/auth/refresh-token", controller.RefreshToken)
 
 		// Me
 		v1.GET("/me", middleware.Auth("me"), controller.Me)
-		v1.PUT("/changepassword/:id", middleware.Auth("me"), controller.ChangePassword)
+		v1.PUT("/changepassword", middleware.Auth("me"), controller.ChangePassword)
+		// Revoke Token
+		v1.PUT("/revoke", middleware.Auth("me"), controller.RevokeRefreshToken)
 
 		// File
 		// Set a lower memory limit for multipart forms (default is 32 MiB)
