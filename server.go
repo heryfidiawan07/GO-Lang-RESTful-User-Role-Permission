@@ -1,9 +1,9 @@
 package main
 
 import (
-	"restfull-api/config"
-	"restfull-api/middleware"
-	"restfull-api/controller"
+	"app/config"
+	"app/middleware"
+	"app/controller"
 	"github.com/gin-gonic/gin"
 	"github.com/subosito/gotenv"
 )

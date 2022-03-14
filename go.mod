@@ -1,4 +1,4 @@
-module restfull-api
+module app
 
 go 1.17
 

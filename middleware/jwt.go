@@ -6,8 +6,8 @@ import (
 	"strings"
 	"github.com/gin-gonic/gin"
 	"github.com/dgrijalva/jwt-go"
-	"restfull-api/config"
-	"restfull-api/models"
+	"app/config"
+	"app/models"
 )
 
 func Auth(action string) gin.HandlerFunc {

@@ -2,10 +2,10 @@ package controller
 
 import (
 	// "fmt"
-	"restfull-api/config"
-	"restfull-api/models"
-	"restfull-api/request"
-	"restfull-api/helper"
+	"app/config"
+	"app/models"
+	"app/request"
+	"app/helper"
 	"github.com/gin-gonic/gin"
 )
 
