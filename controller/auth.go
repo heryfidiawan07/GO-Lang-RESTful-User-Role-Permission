@@ -296,7 +296,8 @@ func createToken(user *models.User) string {
 	// you would like it to contain.
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.Id,
-		"exp": time.Now().Add(time.Minute * 15).Unix(), // expired_at 15 minutes
+		// "exp": time.Now().Add(time.Minute * 15).Unix(), // expired_at 15 minutes
+		"exp": time.Now().AddDate(0, 0, 1).Unix(), // expired_at 1 days
 		"iat": time.Now().Unix(),
 	})
 
