@@ -1,69 +1,79 @@
 package controller
 
 import (
-	"app/config"
-	"app/models"
-	"fmt"
+	// "fmt"
+	"math/rand"
 
 	"github.com/gin-gonic/gin"
 )
 
-func task(start int, end int) <-chan []models.Vehicles {
-	r := make(chan []models.Vehicles)
+func task() <-chan int32 {
+	r := make(chan int32)
 
 	go func() {
 		defer close(r)
-
-		var vehicles []models.Vehicles
-		config.DB.Where("id >= ? AND id <= ?", start, end).Find(&vehicles)
-		r <- vehicles
+		r <- rand.Int31n(100)
 	}()
 
 	return r
 }
 
-func results() []interface{} {
-	// one, two, three, four, five := <-task(1, 2000), <-task(2001, 4000), <-task(4001, 6000), <-task(6001, 8000), <-task(8001, 10000)
-	// // a, b, c, d, e := <-one, <-two, <-three, <-four, <-five
-
-	// var result = []interface{}{
-	// 	// a, b, c, d, e,
-	// 	one, two, three, four, five,
-	// }
-	// //
-	// return result
-
-	var vehicles []models.Vehicles
-	total := config.DB.Find(&vehicles).RowsAffected
-
-	start := 1
-	end := int(total / 10)
-
-	// data := make(map[int]interface{})
-	var data []interface{}
-
-	for i := 1; i <= 10; i++ {
-		if int(end) >= int(total) {
-			end = int(total)
-		}
-
-		// data[i] = <-task(start, end)
-		data = append([]interface{}{<-task(start, end)}, data...)
-		//
-		fmt.Println("start:(", start, ") - end:(", end, ") - of:(", int(total), ") - index=>", i)
-
-		if int(end) >= int(total) {
-			break
-		}
-
-		start = start + int(total/5)
-		end = end + int(total/5)
+func PromiseAll(c *gin.Context) {
+	one, two, three := <-task(), <-task(), <-task()
+	// a, b, c := <-one, <-two, <-three
+	var result map[string]interface{}
+	result = map[string]interface{}{
+		"total":  one + two + three,
+		"detail": []int32{one, two, three},
 	}
 
-	return data
+	c.JSON(200, gin.H{"status": true, "data": result, "message": nil})
 }
 
-func ConcurentIndex(c *gin.Context) {
-	// c.JSON(200, gin.H{"status": true, "data": results(), "message": nil})
-	c.JSON(200, gin.H{"status": true, "data": results(), "message": nil})
+// Javascript
+// Promise.all()
+// *************
+
+// const task = async () => {
+// 	// simulate a workload
+// 	// sleep(3000);
+// 	return Math.floor(Math.random() * Math.floor(100));
+// };
+
+// const [a, b, c] = await Promise.all(
+// 	task(),
+// 	task(),
+// 	task()
+// );
+// console.log(a, b, c);
+
+func worker(text string) <-chan string {
+	r := make(chan string)
+
+	go func() {
+		defer close(r)
+		r <- text
+	}()
+
+	return r
 }
+
+func AsyncAwait(c *gin.Context) {
+	sayHello := <-worker("Hello")
+	full := <-worker(sayHello + " World !")
+
+	c.JSON(200, gin.H{"status": true, "data": full, "message": nil})
+}
+
+// JavaScript
+// Async Await
+// **********
+
+// const worker = async () => {
+// // simulate a workload
+// sleep(3000);
+// 	return Math.floor(Math.random() * Math.floor(100));
+// };
+
+// const r = await worker();
+// console.log(r);

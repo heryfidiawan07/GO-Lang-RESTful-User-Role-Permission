@@ -36,7 +36,8 @@ func main() {
 		v1.PUT("/revoke", middleware.Auth("me"), controller.RevokeRefreshToken)
 
 		// Concurency
-		v1.GET("/concurency", middleware.Auth("me"), controller.ConcurentIndex)
+		v1.GET("/promise_all", middleware.Auth("me"), controller.PromiseAll)
+		v1.GET("/async_await", middleware.Auth("me"), controller.AsyncAwait)
 
 		// File
 		// Set a lower memory limit for multipart forms (default is 32 MiB)
