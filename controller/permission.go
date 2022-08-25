@@ -4,6 +4,9 @@ import (
 	// "fmt"
 	"app/config"
 	"app/models"
+	"encoding/json"
+	"io/ioutil"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,13 +22,16 @@ func PermissionIndex(c *gin.Context) {
 }
 
 func PermissionStore(c *gin.Context) {
-	data := models.Permission {
-		ParentMenu: c.PostForm("parent_menu"),
-		ParentId: c.PostForm("parent_id"),
-		Name: c.PostForm("name"),
-		Alias: c.PostForm("alias"),
-		Url: c.PostForm("url"),
-		Icon: c.PostForm("icon"),
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
+		return
+	}
+
+	var data []models.Permission
+	if err := json.Unmarshal(body, &data); err != nil {
+		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
+		return
 	}
 
 	if err := config.DB.Create(&data).Error; err != nil {

@@ -1,13 +1,14 @@
 package middleware
 
 import (
+	"app/config"
+	"app/models"
 	"fmt"
 	"os"
 	"strings"
-	"github.com/gin-gonic/gin"
+
 	"github.com/dgrijalva/jwt-go"
-	"app/config"
-	"app/models"
+	"github.com/gin-gonic/gin"
 )
 
 func Auth(action string) gin.HandlerFunc {
@@ -25,10 +26,10 @@ func permission(action string, c *gin.Context) bool {
 	config.DB.Where("role_id = ?", user.RoleId).Find(&rolePermissions)
 
 	rolePermissionId := make([]string, len(rolePermissions))
-	for key,value := range rolePermissions {
+	for key, value := range rolePermissions {
 		rolePermissionId[key] = value.PermissionId
-    }
-	
+	}
+
 	var permissions []models.Permission
 	config.DB.Where("id IN ?", rolePermissionId).Find(&permissions)
 
@@ -36,11 +37,11 @@ func permission(action string, c *gin.Context) bool {
 		return true
 	}
 
-	for _,value := range permissions {
-		if(action == value.Name) {
+	for _, value := range permissions {
+		if action == value.Name {
 			return true
 		}
-    }
+	}
 
 	return false
 }
@@ -48,7 +49,7 @@ func permission(action string, c *gin.Context) bool {
 func check(action string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authorization := c.Request.Header.Get("Authorization")
-		bearerToken   := strings.Split(authorization, " ")
+		bearerToken := strings.Split(authorization, " ")
 
 		if len(bearerToken) != 2 {
 			c.JSON(401, gin.H{"message": "Unauthorized !"})
@@ -76,10 +77,10 @@ func check(action string) gin.HandlerFunc {
 				c.Abort()
 				return
 			}
-			
+
 			c.Set("jwt_user_id", claims["user_id"])
 			fmt.Println("**** action **** ", permission(action, c))
-			
+
 			if permission(action, c) == false {
 				c.JSON(401, gin.H{"message": "Permission denied !"})
 				c.Abort()

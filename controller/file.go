@@ -2,12 +2,14 @@ package controller
 
 import (
 	// "fmt"
-	"os"
-	"path/filepath"
 	"encoding/base64"
 	"io/ioutil"
+	"os"
+	"path/filepath"
+
 	// "log"
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,7 +23,7 @@ func Upload(c *gin.Context) {
 	}
 
 	basePath, _ := os.Getwd()
-	path := basePath+"/storage/"+disk
+	path := basePath + "/storage/" + disk
 	filename := filepath.Join(path, file.Filename)
 	// filename := filepath.Base(file.Filename)
 	if err := c.SaveUploadedFile(file, filename); err != nil {
@@ -29,13 +31,13 @@ func Upload(c *gin.Context) {
 		return
 	}
 
-	c.JSON(201, gin.H{"status": true, "data": file.Filename, "message": "Data created successfully"})
+	c.JSON(201, gin.H{"status": true, "data": file.Filename, "message": "Success"})
 }
 
 func Encode(c *gin.Context) {
 	filename := c.Param("filename")
 	// Read the entire file into a byte slice
-	bytes, err := ioutil.ReadFile(filepath.FromSlash("storage/public/"+filename))
+	bytes, err := ioutil.ReadFile(filepath.FromSlash("storage/public/" + filename))
 	if err != nil {
 		// log.Fatal(err)
 		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
@@ -61,13 +63,13 @@ func Encode(c *gin.Context) {
 
 	// Print the full base64 representation of the image
 	// fmt.Println(base64Encoding)
-	c.JSON(201, gin.H{"status": true, "data": base64Encoding, "message": "Data created successfully"})
+	c.JSON(201, gin.H{"status": true, "data": base64Encoding, "message": nil})
 }
 
 func FileStream(c *gin.Context) {
 	filename := c.Param("filename")
 	basePath, _ := os.Getwd()
-	c.File(basePath+"/storage/public/"+filename)
+	c.File(basePath + "/storage/public/" + filename)
 }
 
 func toBase64(b []byte) string {

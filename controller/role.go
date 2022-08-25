@@ -5,6 +5,7 @@ import (
 	"app/config"
 	"app/models"
 	"app/request"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,7 +33,7 @@ func RoleStore(c *gin.Context) {
 		return
 	}
 
-	role := models.Role {
+	role := models.Role{
 		Name: valid.Name,
 	}
 
@@ -40,10 +41,10 @@ func RoleStore(c *gin.Context) {
 		c.JSON(404, gin.H{"status": false, "data": nil, "message": err})
 		return
 	}
-	
+
 	for _, value := range valid.Permissions {
 		permissions := models.RolePermission{
-			RoleId: role.Id,
+			RoleId:       role.Id,
 			PermissionId: value,
 		}
 		if err := config.DB.Create(&permissions).Error; err != nil {
@@ -92,7 +93,7 @@ func RoleUpdate(c *gin.Context) {
 
 	for _, value := range valid.Permissions {
 		permissions := models.RolePermission{
-			RoleId: role.Id,
+			RoleId:       role.Id,
 			PermissionId: value,
 		}
 		if err := config.DB.Create(&permissions).Error; err != nil {
@@ -117,10 +118,10 @@ func RoleShow(c *gin.Context) {
 	config.DB.Where("role_id = ?", id).Find(&rolePermissions)
 
 	rolePermissionId := make([]string, len(rolePermissions))
-	for key,value := range rolePermissions {
+	for key, value := range rolePermissions {
 		rolePermissionId[key] = value.PermissionId
-    }
-	
+	}
+
 	var permissions []models.Permission
 	config.DB.Where("id IN ?", rolePermissionId).Find(&permissions)
 

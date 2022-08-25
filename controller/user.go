@@ -3,9 +3,10 @@ package controller
 import (
 	// "fmt"
 	"app/config"
+	"app/helper"
 	"app/models"
 	"app/request"
-	"app/helper"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,11 +28,12 @@ func UserStore(c *gin.Context) {
 		return
 	}
 
-	data := models.User {
+	data := models.User{
 		Username: valid.Username,
-		Name: valid.Name,
-		Email: valid.Email,
+		Name:     valid.Name,
+		Email:    valid.Email,
 		Password: helper.HashAndSalt([]byte(valid.Password)),
+		RoleId:   valid.RoleId,
 	}
 
 	if err := config.DB.Create(&data).Error; err != nil {
@@ -59,8 +61,8 @@ func UserUpdate(c *gin.Context) {
 
 	data := models.User{
 		Username: valid.Username,
-		Name: valid.Name,
-		Email: valid.Email,
+		Name:     valid.Name,
+		Email:    valid.Email,
 	}
 
 	if err := config.DB.Model(&user).Updates(&data).Error; err != nil {
@@ -99,7 +101,6 @@ func UserDelete(c *gin.Context) {
 
 	c.JSON(200, gin.H{"status": true, "data": nil, "message": "Data deleted successfully"})
 }
-
 
 func ChangePassword(c *gin.Context) {
 	var valid request.ChangePassword

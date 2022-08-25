@@ -1,3 +1,5 @@
 .env
 /storage/public/*
 /storage/private/*
+
+note.txt

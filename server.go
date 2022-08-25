@@ -4,15 +4,14 @@ import (
 	"app/config"
 	"app/controller"
 	"app/middleware"
+	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/subosito/gotenv"
 )
 
 func main() {
 	config.InitDB()
 	// defer config.DB.Close()
-	gotenv.Load()
 
 	router := gin.Default()
 
@@ -21,10 +20,10 @@ func main() {
 		// Home
 		v1.GET("/", controller.Home)
 
-		// Auth
+		// Socialite
 		v1.GET("/auth/:provider", controller.RedirectHandler)
 		v1.GET("/auth/:provider/callback", controller.CallbackHandler)
-		//
+		// Auth
 		v1.POST("/auth/login", controller.Login)
 		v1.POST("/auth/register", controller.Register)
 		v1.POST("/auth/refresh-token", controller.RefreshToken)
@@ -35,16 +34,16 @@ func main() {
 		// Revoke Token
 		v1.PUT("/revoke", middleware.Auth("me"), controller.RevokeRefreshToken)
 
-		// Concurency
+		// Async Await
 		v1.GET("/promise_all", middleware.Auth("me"), controller.PromiseAll)
 		v1.GET("/async_await", middleware.Auth("me"), controller.AsyncAwait)
 
 		// File
 		// Set a lower memory limit for multipart forms (default is 32 MiB)
 		router.MaxMultipartMemory = 8 << 20 // 8 MiB
-		v1.POST("/upload/:disk", controller.Upload)
-		v1.GET("/storage/:filename", controller.FileStream)
-		v1.GET("/encode/:filename", controller.Encode)
+		v1.POST("/upload/:disk", middleware.Auth("except"), controller.Upload)
+		v1.GET("/storage/:filename", middleware.Auth("except"), controller.FileStream)
+		v1.GET("/encode/:filename", middleware.Auth("except"), controller.Encode)
 
 		// User
 		user := v1.Group("/user")
@@ -67,13 +66,14 @@ func main() {
 			role.DELETE("/:id", middleware.Auth("role-delete"), controller.RoleDelete)
 		}
 
-		// Permission
+		// Set Role Permissions
 		permission := v1.Group("/permission")
 		{
 			permission.GET("/", middleware.Auth("except"), controller.PermissionIndex)
 			permission.POST("/", middleware.Auth("except"), controller.PermissionStore)
+			role.POST("/role", middleware.Auth("except"), controller.RoleStore)
 		}
 	}
 
-	router.Run("127.0.0.1:8000")
+	router.Run(os.Getenv("APP_HOST"))
 }

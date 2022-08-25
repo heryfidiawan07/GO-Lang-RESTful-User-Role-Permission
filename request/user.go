@@ -6,9 +6,9 @@ type Login struct {
 }
 
 type Register struct {
-	Name string `form:"name" json:"name" xml:"name"  binding:"required"`
+	Name     string `form:"name" json:"name" xml:"name"  binding:"required"`
 	Username string `form:"username" json:"username" xml:"username"  binding:"required"`
-	Email string `form:"email" json:"email" xml:"email"  binding:"required"`
+	Email    string `form:"email" json:"email" xml:"email"  binding:"required"`
 	Password string `form:"password" json:"password" xml:"password"  binding:"required"`
 }
 
@@ -18,16 +18,18 @@ type ChangePassword struct {
 }
 
 type UserStore struct {
-	Name string `form:"name" json:"name" xml:"name"  binding:"required"`
+	Name     string `form:"name" json:"name" xml:"name"  binding:"required"`
 	Username string `form:"username" json:"username" xml:"username"  binding:"required"`
-	Email string `form:"email" json:"email" xml:"email"  binding:"required"`
+	Email    string `form:"email" json:"email" xml:"email"  binding:"required"`
 	Password string `form:"password" json:"password" xml:"password"  binding:"required"`
+	RoleId   string `form:"role_id" json:"role_id" xml:"role_id"  binding:"required"`
 }
 
 type UserUpdate struct {
-	Name string `form:"name" json:"name" xml:"name"  binding:"required"`
+	Name     string `form:"name" json:"name" xml:"name"  binding:"required"`
 	Username string `form:"username" json:"username" xml:"username"  binding:"required"`
-	Email string `form:"email" json:"email" xml:"email"  binding:"required"`
+	Email    string `form:"email" json:"email" xml:"email"  binding:"required"`
+	RoleId   string `form:"role_id" json:"role_id" xml:"role_id"  binding:"required"`
 }
 
 type RefreshToken struct {
