@@ -623,3 +623,35 @@
     "status": true
 }
 ```
+
+## # Socialite
+
+1. Get url with browser
+
+    ```json
+    http://localhost:8000/api/v1/auth/google
+    http://localhost:8000/api/v1/auth/github
+    ```
+
+2. Select account & login
+3. Response
+
+    ```json
+    {
+        "data": {
+            "Id": "458549c7-ae2c-42b7-b0c1-7011309dd28c",
+            "Name": "User Name",
+            "Username": "Username",
+            "Email": "user@gmail.com",
+            "Password": "",
+            "SocialId": "11810....",
+            "Provider": "google",
+            "Avatar": "https://lh3.googleusercontent.com/a-/...",
+            "RoleId": "",
+            "CreatedAt": "2022-08-25T10:13:34.745+07:00",
+            "UpdatedAt": "2022-08-25T10:13:34.745+07:00",
+            "DeletedAt": null
+        },
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NjE0ODM2MTQsImlhdCI6MTY2MTM5NzIxNCwidXNlcl9pZCI6IjQ1ODU0OWM3LWFlMmMtNDJiNy1iMGMxLTcwMTEzMDlkZDI4YyJ9...."
+    }
+    ```
