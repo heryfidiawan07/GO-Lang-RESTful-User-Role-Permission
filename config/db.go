@@ -43,4 +43,5 @@ func InitDB() {
 	DB.AutoMigrate(&models.User{})
 	DB.AutoMigrate(&models.Permission{})
 	DB.AutoMigrate(&models.RolePermission{})
+	DB.AutoMigrate(&models.RefreshToken{})
 }
