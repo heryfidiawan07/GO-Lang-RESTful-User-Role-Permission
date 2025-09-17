@@ -5,10 +5,11 @@ WORKDIR /app
 COPY . .
 
 RUN go mod tidy
-RUN go build -o app .
+# 👇 compile statis, tidak pakai libc/glibc
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o app .
 
 # Stage 2: Run binary
-FROM alpine:3.18
+FROM scratch
 
 WORKDIR /app
 COPY --from=builder /app/app .
