@@ -8,12 +8,11 @@ RUN go mod tidy
 RUN go build -o app .
 
 # Stage 2: Run binary
-FROM debian:bullseye-slim
+FROM alpine:3.18
 
 WORKDIR /app
 COPY --from=builder /app/app .
 
-# Railway inject $PORT otomatis
 ENV PORT=8080
 EXPOSE 8080
 
