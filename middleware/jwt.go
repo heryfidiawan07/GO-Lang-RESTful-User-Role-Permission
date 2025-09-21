@@ -16,34 +16,35 @@ func Auth(action string) gin.HandlerFunc {
 }
 
 func permission(action string, c *gin.Context) bool {
-	var user models.User
-	config.DB.First(&user, "id = ?", c.MustGet("jwt_user_id"))
-
-	var role models.Role
-	config.DB.First(&role, "id = ?", user.RoleId)
-
-	var rolePermissions []models.RolePermission
-	config.DB.Where("role_id = ?", user.RoleId).Find(&rolePermissions)
-
-	rolePermissionId := make([]string, len(rolePermissions))
-	for key, value := range rolePermissions {
-		rolePermissionId[key] = value.PermissionId
-	}
-
-	var permissions []models.Permission
-	config.DB.Where("id IN ?", rolePermissionId).Find(&permissions)
-
+	// Special cases that don't need database check
 	if action == "me" || action == "except" {
 		return true
 	}
 
-	for _, value := range permissions {
-		if action == value.Name {
+	userID := c.MustGet("jwt_user_id")
+
+	// Check if user is superadmin
+	var user models.User
+	if err := config.DB.First(&user, "id = ?", userID).Error; err == nil {
+		if user.Username == "superadmin" {
 			return true
 		}
 	}
 
-	return false
+	// Single query to check if user has the specific permission
+	var count int64
+	err := config.DB.Table("permissions").
+		Joins("JOIN role_permissions ON permissions.id = role_permissions.permission_id").
+		Joins("JOIN users ON role_permissions.role_id = users.role_id").
+		Where("users.id = ? AND permissions.name = ?", userID, action).
+		Count(&count).Error
+
+	if err != nil {
+		fmt.Printf("Error checking permission: %v\n", err)
+		return false
+	}
+
+	return count > 0
 }
 
 func check(action string) gin.HandlerFunc {
@@ -61,7 +62,7 @@ func check(action string) gin.HandlerFunc {
 		token, _ := jwt.Parse(bearerToken[1], func(token *jwt.Token) (interface{}, error) {
 			// Don't forget to validate the alg is what you expect:
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 
 			// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
@@ -81,7 +82,7 @@ func check(action string) gin.HandlerFunc {
 			c.Set("jwt_user_id", claims["user_id"])
 			fmt.Println("**** action **** ", permission(action, c))
 
-			if permission(action, c) == false {
+			if !permission(action, c) {
 				c.JSON(401, gin.H{"message": "Permission denied !"})
 				c.Abort()
 				return

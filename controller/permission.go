@@ -5,7 +5,8 @@ import (
 	"app/config"
 	"app/models"
 	"encoding/json"
-	"io/ioutil"
+	"io"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,7 +23,7 @@ func PermissionIndex(c *gin.Context) {
 }
 
 func PermissionStore(c *gin.Context) {
-	body, err := ioutil.ReadAll(c.Request.Body)
+	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
 		return
@@ -35,7 +36,12 @@ func PermissionStore(c *gin.Context) {
 	}
 
 	if err := config.DB.Create(&data).Error; err != nil {
-		c.JSON(404, gin.H{"status": false, "data": nil, "message": err})
+		// Check if it's a unique constraint violation
+		if strings.Contains(err.Error(), "unique constraint") || strings.Contains(err.Error(), "duplicate key") {
+			c.JSON(409, gin.H{"status": false, "data": nil, "message": "Permission name already exists"})
+		} else {
+			c.JSON(500, gin.H{"status": false, "data": nil, "message": err.Error()})
+		}
 		return
 	}
 
