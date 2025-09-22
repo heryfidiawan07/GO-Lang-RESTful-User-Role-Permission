@@ -50,46 +50,93 @@ func permission(action string, c *gin.Context) bool {
 func check(action string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authorization := c.Request.Header.Get("Authorization")
-		bearerToken := strings.Split(authorization, " ")
 
-		if len(bearerToken) != 2 {
-			c.JSON(401, gin.H{"message": "Unauthorized !"})
+		// Check if Authorization header exists
+		if authorization == "" {
+			c.JSON(401, gin.H{"status": false, "message": "Authorization header is required"})
 			c.Abort()
 			return
 		}
 
-		// token, err := jwt.Parse(bearerToken[1], func(token *jwt.Token) (interface{}, error) {
-		token, _ := jwt.Parse(bearerToken[1], func(token *jwt.Token) (interface{}, error) {
-			// Don't forget to validate the alg is what you expect:
+		bearerToken := strings.Split(authorization, " ")
+
+		// Check if Bearer token format is correct
+		if len(bearerToken) != 2 || bearerToken[0] != "Bearer" {
+			c.JSON(401, gin.H{"status": false, "message": "Invalid authorization header format. Expected: Bearer <token>"})
+			c.Abort()
+			return
+		}
+
+		// Check if token is not empty
+		if bearerToken[1] == "" {
+			c.JSON(401, gin.H{"status": false, "message": "Token cannot be empty"})
+			c.Abort()
+			return
+		}
+
+		// Parse and validate JWT token
+		token, err := jwt.Parse(bearerToken[1], func(token *jwt.Token) (interface{}, error) {
+			// Validate signing method
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
-
-			// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
 			return []byte(os.Getenv("JWT_SECRET")), nil
 		})
 
+		// Handle JWT parsing errors
+		if err != nil {
+			var errorMessage string
+			if ve, ok := err.(*jwt.ValidationError); ok {
+				switch {
+				case ve.Errors&jwt.ValidationErrorExpired != 0:
+					errorMessage = "Token has expired"
+				case ve.Errors&jwt.ValidationErrorNotValidYet != 0:
+					errorMessage = "Token is not valid yet"
+				case ve.Errors&jwt.ValidationErrorMalformed != 0:
+					errorMessage = "Token is malformed"
+				default:
+					errorMessage = "Token validation failed"
+				}
+			} else {
+				errorMessage = "Invalid token format"
+			}
+			c.JSON(401, gin.H{"status": false, "message": errorMessage})
+			c.Abort()
+			return
+		}
+
+		// Check if token is valid and extract claims
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			// fmt.Println(claims["user_id"], claims["username"])
-			fmt.Println("user_id", claims["user_id"])
-			var user models.User
-			if err := config.DB.First(&user, "id = ?", claims["user_id"]).Error; err != nil {
-				c.JSON(404, gin.H{"message": "Data not found !"})
+			// Check if user_id exists in claims
+			userID, exists := claims["user_id"]
+			if !exists || userID == "" {
+				c.JSON(401, gin.H{"status": false, "message": "Token missing user_id claim"})
 				c.Abort()
 				return
 			}
 
-			c.Set("jwt_user_id", claims["user_id"])
+			fmt.Println("user_id", userID)
+
+			// Verify user exists in database
+			var user models.User
+			if err := config.DB.First(&user, "id = ?", userID).Error; err != nil {
+				c.JSON(404, gin.H{"status": false, "message": "User not found"})
+				c.Abort()
+				return
+			}
+
+			// Set user_id in context for further use
+			c.Set("jwt_user_id", userID)
 			fmt.Println("**** action **** ", permission(action, c))
 
+			// Check permissions
 			if !permission(action, c) {
-				c.JSON(401, gin.H{"message": "Permission denied !"})
+				c.JSON(403, gin.H{"status": false, "message": "Access denied: insufficient permissions"})
 				c.Abort()
 				return
 			}
 		} else {
-			// fmt.Println(err)
-			c.JSON(422, gin.H{"message": "Invalid Token !"})
+			c.JSON(401, gin.H{"status": false, "message": "Invalid token"})
 			c.Abort()
 			return
 		}

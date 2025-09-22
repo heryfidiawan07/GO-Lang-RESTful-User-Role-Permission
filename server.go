@@ -35,6 +35,7 @@ func main() {
 		v1.PUT("/revoke", middleware.Auth("me"), controller.RevokeRefreshToken)
 
 		// Async Await
+		v1.GET("/go-routine", middleware.Auth("me"), controller.GoRoutine)
 		v1.GET("/promise_all", middleware.Auth("me"), controller.PromiseAll)
 		v1.GET("/async_await", middleware.Auth("me"), controller.AsyncAwait)
 
