@@ -17,7 +17,7 @@ func Auth(action string) gin.HandlerFunc {
 
 func permission(action string, c *gin.Context) bool {
 	// Special cases that don't need database check
-	if action == "me" || action == "except" {
+	if action == "except" {
 		return true
 	}
 

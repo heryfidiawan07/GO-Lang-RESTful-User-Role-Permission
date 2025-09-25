@@ -28,16 +28,16 @@ func main() {
 		v1.POST("/auth/register", controller.Register)
 		v1.POST("/auth/refresh-token", controller.RefreshToken)
 
-		// Me
-		v1.GET("/me", middleware.Auth("me"), controller.Me)
-		v1.PUT("/changepassword", middleware.Auth("me"), controller.ChangePassword)
-		// Revoke Token
-		v1.PUT("/revoke", middleware.Auth("me"), controller.RevokeRefreshToken)
+		// Concurrency
+		v1.GET("/go-routine", controller.GoRoutine)
+		v1.GET("/go-routine-wait-group", controller.GoRoutineWaitGroup)
+		v1.GET("/synchronous", controller.Synchronous)
 
-		// Async Await
-		v1.GET("/go-routine", middleware.Auth("me"), controller.GoRoutine)
-		v1.GET("/promise_all", middleware.Auth("me"), controller.PromiseAll)
-		v1.GET("/async_await", middleware.Auth("me"), controller.AsyncAwait)
+		// Me
+		v1.GET("/me", middleware.Auth("except"), controller.Me)
+		v1.PUT("/changepassword", middleware.Auth("except"), controller.ChangePassword)
+		// Revoke Token
+		v1.PUT("/revoke", middleware.Auth("except"), controller.RevokeRefreshToken)
 
 		// File
 		// Set a lower memory limit for multipart forms (default is 32 MiB)
