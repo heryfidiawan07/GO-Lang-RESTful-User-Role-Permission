@@ -1,14 +1,14 @@
 package controller
 
 import (
-	// "fmt"
+	"crypto/md5"
 	"encoding/base64"
+	"encoding/hex"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
-
-	// "log"
-	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,16 +22,23 @@ func Upload(c *gin.Context) {
 		return
 	}
 
+	// Ambil ekstensi file asli
+	ext := filepath.Ext(file.Filename)
+	// Generate nama baru pakai MD5 hash dari timestamp + nama asli biar unik
+	hash := md5.New()
+	hash.Write([]byte(file.Filename + time.Now().String()))
+	hashed := hex.EncodeToString(hash.Sum(nil)) + ext
+
 	basePath, _ := os.Getwd()
 	path := basePath + "/storage/" + disk
-	filename := filepath.Join(path, file.Filename)
+	filename := filepath.Join(path, hashed)
 	// filename := filepath.Base(file.Filename)
 	if err := c.SaveUploadedFile(file, filename); err != nil {
 		c.JSON(404, gin.H{"status": false, "data": nil, "message": err.Error()})
 		return
 	}
 
-	c.JSON(201, gin.H{"status": true, "data": file.Filename, "message": "Success"})
+	c.JSON(201, gin.H{"status": true, "data": hashed, "message": "Success"})
 }
 
 func Encode(c *gin.Context) {
