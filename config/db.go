@@ -32,7 +32,7 @@ func InitDB() {
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
-		panic("Failed connect database !" + err.Error())
+		panic("Failed connect database!" + err.Error())
 	}
 
 	// defer db.Close()

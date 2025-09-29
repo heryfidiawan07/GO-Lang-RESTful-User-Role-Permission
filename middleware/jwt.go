@@ -26,7 +26,7 @@ func permission(action string, c *gin.Context) bool {
 	// Check if user is superadmin
 	var user models.User
 	if err := config.DB.First(&user, "id = ?", userID).Error; err == nil {
-		if user.Username == "superadmin" {
+		if user.IsSuperadmin {
 			return true
 		}
 	}
