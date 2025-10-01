@@ -26,12 +26,12 @@ func RedirectHandler(c *gin.Context) {
 		"github": {
 			"clientID":     os.Getenv("CLIENT_ID_GITHUB"),
 			"clientSecret": os.Getenv("CLIENT_SECRETS_GITHUB"),
-			"redirectURL":  os.Getenv("AUTH_REDIRECT_URL") + "/github/callback/",
+			"redirectURL":  os.Getenv("GITHUB_REDIRECT_URL"),
 		},
 		"google": {
 			"clientID":     os.Getenv("CLIENT_ID_GOOGLE"),
 			"clientSecret": os.Getenv("CLIENT_SECRETS_GOOGLE"),
-			"redirectURL":  os.Getenv("AUTH_REDIRECT_URL") + "/google/callback/",
+			"redirectURL":  os.Getenv("GOOGLE_REDIRECT_URL"),
 		},
 	}
 
@@ -85,8 +85,12 @@ func CallbackHandler(c *gin.Context) {
 	var newToken = createToken(&newUser)
 
 	c.JSON(200, gin.H{
-		"token": newToken,
-		"data":  newUser,
+		"status":  true,
+		"message": "success",
+		"data": map[string]interface{}{
+			"token": newToken,
+			"user":  newUser,
+		},
 	})
 
 	// If no errors, show provider name
