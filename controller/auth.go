@@ -125,14 +125,21 @@ func Login(c *gin.Context) {
 
 	var token = createToken(&user)
 	var refreshToken = createRefreshToken(&refreshTokenData)
+	// fmt.Println("token: ", token)
+	// fmt.Println("refreshToken: ", refreshToken)
+	// fmt.Println("user: ", user)
 
 	result := struct {
-		token         string
-		refresh_token string
-		user          models.User
-	}{token, refreshToken, user}
+		Token        string      `json:"token"`
+		RefreshToken string      `json:"refresh_token"`
+		User         models.User `json:"user"`
+	}{
+		Token:        token,
+		RefreshToken: refreshToken,
+		User:         user,
+	}
 
-	c.JSON(404, gin.H{"status": true, "data": result, "message": nil})
+	c.JSON(200, gin.H{"status": true, "data": result, "message": "success"})
 }
 
 func Register(c *gin.Context) {
@@ -206,9 +213,11 @@ func RefreshToken(c *gin.Context) {
 	})
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		fmt.Println("refresh_id", claims["refresh_id"])
+		data := claims["data"].(map[string]interface{})
+		refreshID := data["refresh_id"]
+		fmt.Println("refresh_id", refreshID)
 		var refreshToken models.RefreshToken
-		if err := config.DB.First(&refreshToken, "id = ?", claims["refresh_id"]).Error; err != nil {
+		if err := config.DB.First(&refreshToken, "id = ?", refreshID).Error; err != nil {
 			c.JSON(404, gin.H{"status": false, "data": nil, "message": "Refresh token not found!"})
 			return
 		}
@@ -263,9 +272,11 @@ func RevokeRefreshToken(c *gin.Context) {
 	})
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		fmt.Println("refresh_id", claims["refresh_id"])
+		data := claims["data"].(map[string]interface{})
+		refreshID := data["refresh_id"]
+		fmt.Println("refresh_id", refreshID)
 		var refreshToken models.RefreshToken
-		if err := config.DB.First(&refreshToken, "id = ?", claims["refresh_id"]).Error; err != nil {
+		if err := config.DB.First(&refreshToken, "id = ?", refreshID).Error; err != nil {
 			c.JSON(404, gin.H{"status": false, "data": nil, "message": "Refresh token not found!"})
 			return
 		}
@@ -280,11 +291,7 @@ func RevokeRefreshToken(c *gin.Context) {
 			return
 		}
 
-		data := models.RefreshToken{
-			Revoked: true,
-		}
-
-		if err := config.DB.Model(&refreshToken).Updates(&data).Error; err != nil {
+		if err := config.DB.Model(&refreshToken).Update("revoked", true).Error; err != nil {
 			c.JSON(404, gin.H{"status": false, "data": nil, "message": err})
 			return
 		}
@@ -307,9 +314,11 @@ func createToken(user *models.User) string {
 		"exp": time.Now().AddDate(0, 0, 1).Unix(), // expired_at 1 days
 		"iat": time.Now().Unix(),
 	})
+	// fmt.Println("jwtToken: ", jwtToken)
 
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := jwtToken.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	// fmt.Println("tokenString: ", tokenString)
 	if err != nil {
 		fmt.Println("tokenString err", err)
 	}
